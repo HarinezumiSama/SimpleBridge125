@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.13
+MinimumVisualStudioVersion = 15.0.0.0
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarinezumiSama.SimpleBridge125", "HarinezumiSama.SimpleBridge125\HarinezumiSama.SimpleBridge125.csproj", "{077644B7-16C4-4365-81CF-19DF8A0FC181}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarinezumiSama.SimpleBridge125.UnitTests", "HarinezumiSama.SimpleBridge125.UnitTests\HarinezumiSama.SimpleBridge125.UnitTests.csproj", "{C95D7319-07D7-4A3A-8681-3F33DE6FA861}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{077644B7-16C4-4365-81CF-19DF8A0FC181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{077644B7-16C4-4365-81CF-19DF8A0FC181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{077644B7-16C4-4365-81CF-19DF8A0FC181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{077644B7-16C4-4365-81CF-19DF8A0FC181}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C95D7319-07D7-4A3A-8681-3F33DE6FA861}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C95D7319-07D7-4A3A-8681-3F33DE6FA861}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C95D7319-07D7-4A3A-8681-3F33DE6FA861}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C95D7319-07D7-4A3A-8681-3F33DE6FA861}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EF24FB53-E308-4074-AF92-5487D9CCACE7}
+	EndGlobalSection
+EndGlobal
