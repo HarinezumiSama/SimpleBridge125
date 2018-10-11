@@ -6,9 +6,10 @@ namespace HarinezumiSama.SimpleBridge125
 {
     public static class PlayingCards
     {
-        public static readonly IReadOnlyCollection<PlayingCard> All = CreateAll();
+        public static readonly IReadOnlyList<PlayingCard> All = CreateAll();
+        public static readonly IReadOnlyList<PlayingCard> Empty = new PlayingCard[0].AsReadOnly();
 
-        private static IReadOnlyCollection<PlayingCard> CreateAll()
+        private static IReadOnlyList<PlayingCard> CreateAll()
         {
             var allRanks = EnumFactotum.GetAllValues<PlayingCardRank>();
             var allSuits = EnumFactotum.GetAllValues<PlayingCardSuit>();
