@@ -1,6 +1,8 @@
-﻿namespace HarinezumiSama.SimpleBridge125
+﻿using System;
+
+namespace HarinezumiSama.SimpleBridge125
 {
-    public struct PlayingCard
+    public struct PlayingCard : IEquatable<PlayingCard>
     {
         public PlayingCard(PlayingCardRank rank, PlayingCardSuit suit)
         {
@@ -18,9 +20,19 @@
             get;
         }
 
-        public override string ToString()
-        {
-            return $@"{Rank.AsString()}{Suit.AsString()}";
-        }
+        public override string ToString() => $@"{Rank.AsString()}{Suit.AsString()}";
+
+        public override bool Equals(object obj) => obj is PlayingCard other && Equals(other);
+
+        public override int GetHashCode() => Rank.CombineHashCodes(Suit);
+
+        public bool Equals(PlayingCard other) => Equals(this, other);
+
+        public static bool Equals(PlayingCard left, PlayingCard right)
+            => left.Rank == right.Rank && left.Suit == right.Suit;
+
+        public static bool operator ==(PlayingCard left, PlayingCard right) => Equals(left, right);
+
+        public static bool operator !=(PlayingCard left, PlayingCard right) => !Equals(left, right);
     }
 }
