@@ -42,7 +42,8 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DrawingStackTests.cs" />
+    <Compile Include="CardStackTests.cs" />
+    <Compile Include="GameTests.cs" />
     <Compile Include="PlayingCardsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

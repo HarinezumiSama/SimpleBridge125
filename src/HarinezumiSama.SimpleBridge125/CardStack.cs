@@ -8,7 +8,9 @@ using Omnifactotum.Annotations;
 
 namespace HarinezumiSama.SimpleBridge125
 {
-    public abstract class CardStack
+    //// ReSharper disable once UseNameofExpression :: False positive
+    [DebuggerDisplay(@"{ToString(),nq}")]
+    public sealed class CardStack
     {
         private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
 
@@ -19,7 +21,7 @@ namespace HarinezumiSama.SimpleBridge125
 
         private readonly List<PlayingCard> _innerCards;
 
-        protected CardStack([NotNull] IReadOnlyList<PlayingCard> cards)
+        public CardStack([NotNull] IReadOnlyList<PlayingCard> cards)
         {
             if (cards is null)
             {
@@ -39,6 +41,9 @@ namespace HarinezumiSama.SimpleBridge125
         }
 
         public bool IsEmpty => _innerCards.Count == 0;
+
+        public override string ToString()
+            => $@"{GetType().GetQualifiedName()}: {nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
 
         public PlayingCard WithdrawTopCard()
         {
