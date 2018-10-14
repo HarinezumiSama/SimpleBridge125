@@ -11,14 +11,14 @@ namespace HarinezumiSama.SimpleBridge125.UnitTests
         [Test]
         public void TestConstruction()
         {
-            var stack = new CardStack(PlayingCards.All);
-            Assert.That(stack.Cards, Is.EqualTo(PlayingCards.All));
+            var stack = new CardStack(Constants.Cards.All);
+            Assert.That(stack.Cards, Is.EqualTo(Constants.Cards.All));
         }
 
         [Test]
         public void TestShuffle()
         {
-            var stack = new CardStack(PlayingCards.All);
+            var stack = new CardStack(Constants.Cards.All);
 
             for (var index = 0; index < ShuffleCount; index++)
             {
@@ -26,7 +26,7 @@ namespace HarinezumiSama.SimpleBridge125.UnitTests
 
                 stack.Shuffle();
 
-                Assert.That(stack.Cards, Is.EquivalentTo(PlayingCards.All));
+                Assert.That(stack.Cards, Is.EquivalentTo(Constants.Cards.All));
                 Assert.That(stack.Cards, Is.Not.EqualTo(beforeShuffleCards));
             }
         }

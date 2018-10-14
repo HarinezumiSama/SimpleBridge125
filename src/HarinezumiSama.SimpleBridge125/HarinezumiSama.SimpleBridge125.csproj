@@ -45,13 +45,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CardStack.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Move.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="PlayingCard.cs" />
     <Compile Include="PlayingCardRank.cs" />
     <Compile Include="PlayingCardSuitExtensions.cs" />
     <Compile Include="PlayingCardRankExtensions.cs" />
-    <Compile Include="PlayingCards.cs" />
     <Compile Include="PlayingCardSuit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
