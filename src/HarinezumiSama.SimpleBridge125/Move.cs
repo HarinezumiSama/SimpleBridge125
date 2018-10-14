@@ -1,23 +1,46 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using Omnifactotum.Annotations;
 
 namespace HarinezumiSama.SimpleBridge125
 {
     //// ReSharper disable once UseNameofExpression :: False positive
     [DebuggerDisplay(@"{ToDebugString(),nq}")]
-    public struct Move
+    public sealed class Move
     {
-        //// TODO [HarinezumiSama] Implement Move: One move should allow a few cards of the same rank
-
-        public Move(PlayingCard card, bool isBridgeDeclared, PlayingCardSuit? requestedSuit)
+        public Move(
+            [NotNull] IReadOnlyList<PlayingCard> cards,
+            bool isBridgeDeclared,
+            PlayingCardSuit? requestedSuit)
         {
-            if (card.Rank == PlayingCardRank.Jack)
+            if (cards is null)
+            {
+                throw new ArgumentNullException(nameof(cards));
+            }
+
+            if (cards.Count == 0)
+            {
+                throw new ArgumentException(@"A move must contain at least one card.", nameof(cards));
+            }
+
+            var cardRank = cards[0].Rank;
+            for (var index = 1; index < cards.Count - 1; index++)
+            {
+                if (cards[index].Rank != cardRank)
+                {
+                    throw new ArgumentException(@"The cards in a move must be of the same rank.", nameof(cards));
+                }
+            }
+
+            if (cardRank == PlayingCardRank.Jack)
             {
                 if (!requestedSuit.HasValue)
                 {
                     throw new ArgumentNullException(
                         nameof(requestedSuit),
-                        $@"The requested suit must be specified when the card is {PlayingCardRank.Jack}.");
+                        $@"The requested suit must be specified when the card rank is {PlayingCardRank.Jack}.");
                 }
             }
             else
@@ -25,17 +48,30 @@ namespace HarinezumiSama.SimpleBridge125
                 if (requestedSuit.HasValue)
                 {
                     throw new ArgumentException(
-                        $@"The requested suit cannot be specified when the card is {card}.",
+                        $@"The requested suit cannot be specified when the card rank is '{cardRank}'.",
                         nameof(requestedSuit));
                 }
             }
 
-            Card = card;
+            Cards = cards.ToArray().AsReadOnly();
+            FirstCard = cards.First();
+            LastCard = cards.Last();
             IsBridgeDeclared = isBridgeDeclared;
             RequestedSuit = requestedSuit;
         }
 
-        public PlayingCard Card
+        [NotNull]
+        public IReadOnlyList<PlayingCard> Cards
+        {
+            get;
+        }
+
+        public PlayingCard FirstCard
+        {
+            get;
+        }
+
+        public PlayingCard LastCard
         {
             get;
         }
@@ -51,8 +87,8 @@ namespace HarinezumiSama.SimpleBridge125
         }
 
         public override string ToString()
-            => $@"{nameof(Card)} = {Card}, {nameof(IsBridgeDeclared)} = {IsBridgeDeclared}, {nameof(
-                RequestedSuit)} = {RequestedSuit.ToUIString()}";
+            => $@"{nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}, {nameof(IsBridgeDeclared)} = {
+                IsBridgeDeclared}, {nameof(RequestedSuit)} = {RequestedSuit.ToUIString()}";
 
         private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
     }

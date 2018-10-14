@@ -73,7 +73,7 @@ namespace HarinezumiSama.SimpleBridge125
 
         public Player CurrentPlayer => Players[CurrentPlayerIndex];
 
-        public Move? LastMove
+        public Move LastMove
         {
             get;
             private set;
@@ -100,14 +100,19 @@ namespace HarinezumiSama.SimpleBridge125
             }
 
             var lastCard = ActiveStack.Cards.Last();
-            if (!LastMove.HasValue || LastMove.Value.Card != lastCard)
+            if (LastMove is null)
             {
                 throw new InvalidOperationException(
-                    $@"[Internal error] Inconsistency between the last card ({lastCard}) and last move ({
-                        LastMove.ToUIString()}).");
+                    @"[Internal error] The active stack is not empty, but the last move is not set.");
             }
 
-            var requestedSuit = LastMove.Value.RequestedSuit ?? lastCard.Suit;
+            if (LastMove.LastCard != lastCard)
+            {
+                throw new InvalidOperationException(
+                    $@"[Internal error] Inconsistency between the last card ({lastCard}) and last move ({LastMove}).");
+            }
+
+            var requestedSuit = LastMove.RequestedSuit ?? lastCard.Suit;
 
             var result = new HashSet<PlayingCard>(Constants.Cards.Trump);
             result.UnionWith(Constants.Cards.BySuit[requestedSuit]);
@@ -116,41 +121,63 @@ namespace HarinezumiSama.SimpleBridge125
             return result;
         }
 
-        public void MakeMove(Move move)
+        public void MakeMove([NotNull] Move move)
         {
-            if (!CurrentPlayer.Cards.Contains(move.Card))
+            if (move is null)
             {
-                throw new ArgumentException(
-                    $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
-                        move.Card} since they don't have this card in hand.",
-                    nameof(move));
+                throw new ArgumentNullException(nameof(move));
+            }
+
+            foreach (var card in move.Cards)
+            {
+                if (!CurrentPlayer.Cards.Contains(card))
+                {
+                    throw new ArgumentException(
+                        $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
+                            card} since they don't have this card in hand.",
+                        nameof(move));
+                }
             }
 
             var validMoveCards = GetValidMoveCards();
-            if (!validMoveCards.Contains(move.Card))
+            if (!validMoveCards.Contains(move.FirstCard))
             {
                 var validMoveCardsString = validMoveCards.Select(card => card.ToString()).Join(", ");
 
                 throw new ArgumentException(
                     $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
-                        move.Card} as this card is invalid for the current game state (valid cards: {
+                        move.FirstCard} as this card is invalid for the current game state (valid cards: {
                         validMoveCardsString}).",
                     nameof(move));
             }
 
-            if (move.IsBridgeDeclared && !CanDeclareBridgeWith(move.Card))
+            if (move.IsBridgeDeclared && !CanDeclareBridgeWith(move))
             {
                 throw new ArgumentException(
-                    $@"The player {CurrentPlayer.Name.ToUIString()} cannot declare bridge with {move.Card}.",
+                    $@"The player {CurrentPlayer.Name.ToUIString()} cannot declare bridge with {move}.",
                     nameof(move));
             }
 
             throw new NotImplementedException();
         }
 
-        private bool CanDeclareBridgeWith(PlayingCard card)
-            => ActiveStack.Cards.Count == Constants.Suits.Count - 1
-                && ActiveStack.Cards.All(value => value.Rank == card.Rank);
+        private bool CanDeclareBridgeWith([NotNull] Move move)
+        {
+            var rank = move.FirstCard.Rank;
+
+            var sameRankCount = move.Cards.Count;
+            for (var index = ActiveStack.Cards.Count - 1; index >= 0; index--)
+            {
+                if (ActiveStack.Cards[index].Rank != rank)
+                {
+                    break;
+                }
+
+                sameRankCount++;
+            }
+
+            return sameRankCount >= Constants.Suits.Count;
+        }
 
         private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
 
