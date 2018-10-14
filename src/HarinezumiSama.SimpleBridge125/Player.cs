@@ -6,7 +6,7 @@ using Omnifactotum;
 namespace HarinezumiSama.SimpleBridge125
 {
     //// ReSharper disable once UseNameofExpression :: False positive
-    [DebuggerDisplay(@"{ToString(),nq}")]
+    [DebuggerDisplay(@"{ToDebugString(),nq}")]
     public sealed class Player
     {
         private readonly HashSet<PlayingCard> _cards;
@@ -60,7 +60,9 @@ namespace HarinezumiSama.SimpleBridge125
         }
 
         public override string ToString()
-            => $@"{GetType().GetQualifiedName()}: {nameof(Name)} = {Name.ToUIString()}, {nameof(Score)} = {Score}, {
-                nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
+            => $@"{nameof(Name)} = {Name.ToUIString()}, {nameof(Score)} = {Score}, {nameof(Cards)}.{
+                nameof(Cards.Count)} = {Cards.Count}";
+
+        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
     }
 }

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace HarinezumiSama.SimpleBridge125
 {
+    //// ReSharper disable once UseNameofExpression :: False positive
+    [DebuggerDisplay(@"{ToDebugString(),nq}")]
     public struct PlayingCard : IEquatable<PlayingCard>
     {
         public PlayingCard(PlayingCardRank rank, PlayingCardSuit suit)
@@ -34,5 +37,7 @@ namespace HarinezumiSama.SimpleBridge125
         public static bool operator ==(PlayingCard left, PlayingCard right) => Equals(left, right);
 
         public static bool operator !=(PlayingCard left, PlayingCard right) => !Equals(left, right);
+
+        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
     }
 }

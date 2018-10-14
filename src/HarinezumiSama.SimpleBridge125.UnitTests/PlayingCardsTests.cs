@@ -1,5 +1,4 @@
-﻿using System;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace HarinezumiSama.SimpleBridge125.UnitTests
 {
@@ -9,8 +8,8 @@ namespace HarinezumiSama.SimpleBridge125.UnitTests
         [Test]
         public void TestAll()
         {
-            Assert.That(PlayingCards.All, Is.Not.Null);
-            Assert.That(PlayingCards.All.Count, Is.EqualTo(4 * 9));
+            Assert.That(Constants.Cards.All, Is.Not.Null);
+            Assert.That(Constants.Cards.All.Count, Is.EqualTo(36));
         }
     }
 }
