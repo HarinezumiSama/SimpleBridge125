@@ -40,7 +40,7 @@ namespace HarinezumiSama.SimpleBridge125
                 {
                     throw new ArgumentNullException(
                         nameof(requestedSuit),
-                        $@"The requested suit must be specified when the card rank is {PlayingCardRank.Jack}.");
+                        $@"The requested suit must be specified when the card rank is '{PlayingCardRank.Jack}'.");
                 }
             }
             else

@@ -40,6 +40,7 @@ namespace HarinezumiSama.SimpleBridge125
             CurrentDealerIndex = 0;
             CurrentPlayerIndex = 0;
             PointsRatio = 1;
+            RequiredFirstCard = null;
 
             Initialize();
         }
@@ -65,6 +66,8 @@ namespace HarinezumiSama.SimpleBridge125
             private set;
         }
 
+        public Player CurrentDealer => Players[CurrentDealerIndex];
+
         public int CurrentPlayerIndex
         {
             get;
@@ -80,6 +83,12 @@ namespace HarinezumiSama.SimpleBridge125
         }
 
         public int PointsRatio
+        {
+            get;
+            private set;
+        }
+
+        public PlayingCard? RequiredFirstCard
         {
             get;
             private set;
@@ -125,18 +134,16 @@ namespace HarinezumiSama.SimpleBridge125
         {
             if (move is null)
             {
+                //// TODO [HarinezumiSama] Use null as 'pass'?
                 throw new ArgumentNullException(nameof(move));
             }
 
-            foreach (var card in move.Cards)
+            if (RequiredFirstCard.HasValue && move.FirstCard != RequiredFirstCard.Value)
             {
-                if (!CurrentPlayer.Cards.Contains(card))
-                {
-                    throw new ArgumentException(
-                        $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
-                            card} since they don't have this card in hand.",
-                        nameof(move));
-                }
+                throw new ArgumentException(
+                    $@"The player {CurrentPlayer.Name.ToUIString()} is a dealer and their first card in the first move must be {
+                        RequiredFirstCard.Value} (but was {move.FirstCard}).",
+                    nameof(move));
             }
 
             var validMoveCards = GetValidMoveCards();
@@ -158,7 +165,107 @@ namespace HarinezumiSama.SimpleBridge125
                     nameof(move));
             }
 
-            throw new NotImplementedException();
+            var newCurrentPlayerIndex = CurrentPlayerIndex;
+            var victimPlayerIndex = GetNextPlayerIndex(CurrentPlayerIndex);
+
+            void MoveToNextPlayer(bool skipMove)
+            {
+                GetNextPlayerIndex(ref newCurrentPlayerIndex);
+
+                if (!skipMove)
+                {
+                    return;
+                }
+
+                GetNextPlayerIndex(ref victimPlayerIndex);
+                if (victimPlayerIndex == CurrentPlayerIndex)
+                {
+                    GetNextPlayerIndex(ref victimPlayerIndex);
+                }
+            }
+
+            void DrawCardsToVictimPlayer(int count)
+            {
+                if (count <= 0 || count > Constants.Cards.All.Count)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(count),
+                        count,
+                        $@"The value is out of the valid range (1 .. {Constants.Cards.All.Count}).");
+                }
+
+                for (var index = 0; index < count; index++)
+                {
+                    var card = DrawCard();
+
+                    var nextPlayer = Players[victimPlayerIndex];
+                    nextPlayer.AppendCard(card);
+                }
+            }
+
+            if (move.FirstCard.Rank != PlayingCardRank.Six)
+            {
+                MoveToNextPlayer(false);
+            }
+
+            foreach (var card in move.Cards)
+            {
+                if (!CurrentPlayer.Cards.Contains(card))
+                {
+                    throw new ArgumentException(
+                        $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
+                            card} since they don't have this card in hand.",
+                        nameof(move));
+                }
+
+                CurrentPlayer.RemoveCard(card);
+                ActiveStack.DepositCardOnTop(card);
+
+                switch (card.Rank)
+                {
+                    case PlayingCardRank.Seven:
+                        DrawCardsToVictimPlayer(1);
+                        break;
+
+                    case PlayingCardRank.Eight:
+                        DrawCardsToVictimPlayer(2);
+                        MoveToNextPlayer(true);
+                        break;
+
+                    case PlayingCardRank.Six:
+                    case PlayingCardRank.Nine:
+                    case PlayingCardRank.Ten:
+                    case PlayingCardRank.Jack:
+                    case PlayingCardRank.King:
+                        break;
+
+                    case PlayingCardRank.Queen:
+                        if (card.Suit == PlayingCardSuit.Spades)
+                        {
+                            DrawCardsToVictimPlayer(5);
+                            MoveToNextPlayer(true);
+                        }
+
+                        break;
+
+                    case PlayingCardRank.Ace:
+                        MoveToNextPlayer(true);
+                        break;
+
+                    default:
+                        throw card.Rank.CreateEnumValueNotImplementedException();
+                }
+            }
+
+            if (move.IsBridgeDeclared
+                || (CurrentPlayer.Cards.Count == 0 && move.FirstCard.Rank != PlayingCardRank.Six))
+            {
+                throw new NotImplementedException("[TODO] Implement end of round.");
+            }
+
+            CurrentPlayerIndex = newCurrentPlayerIndex;
+            LastMove = move;
+            RequiredFirstCard = null;
         }
 
         private bool CanDeclareBridgeWith([NotNull] Move move)
@@ -179,6 +286,42 @@ namespace HarinezumiSama.SimpleBridge125
             return sameRankCount >= Constants.Suits.Count;
         }
 
+        private int GetNextPlayerIndex(int playerIndex)
+        {
+            if (playerIndex < 0 || playerIndex >= Players.Count)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(playerIndex),
+                    playerIndex,
+                    $@"The value is out of the valid range (0 .. {Players.Count - 1}).");
+            }
+
+            return (playerIndex + 1) % Players.Count;
+        }
+
+        private void GetNextPlayerIndex(ref int playerIndex) => playerIndex = GetNextPlayerIndex(playerIndex);
+
+        private PlayingCard DrawCard()
+        {
+            if (DrawingStack.IsEmpty)
+            {
+                throw new InvalidOperationException(@"[Internal error] The drawing stack is empty.");
+            }
+
+            var result = DrawingStack.WithdrawTopCard();
+
+            if (DrawingStack.IsEmpty)
+            {
+                var refillCards = ActiveStack.WithdrawAllCardsExceptTopCardWithSameRank();
+                DrawingStack.Refill(refillCards);
+                DrawingStack.Shuffle();
+
+                PointsRatio++;
+            }
+
+            return result;
+        }
+
         private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
 
         private void Initialize()
@@ -192,21 +335,19 @@ namespace HarinezumiSama.SimpleBridge125
                     var actualPlayerIndex = (playerIndex + CurrentDealerIndex + 1) % Players.Count;
 
                     var card = DrawingStack.WithdrawTopCard();
+                    Players[actualPlayerIndex].AppendCard(card);
+
                     if (index == CardsPerPlayer - 1 && actualPlayerIndex == CurrentDealerIndex)
                     {
-                        ActiveStack.DepositCardOnTop(card);
-                    }
-                    else
-                    {
-                        Players[actualPlayerIndex].AppendCard(card);
+                        RequiredFirstCard = card;
                     }
                 }
             }
 
-            if (ActiveStack.Cards.Count != 1)
+            if (ActiveStack.Cards.Count != 0)
             {
                 throw new InvalidOperationException(
-                    $@"[Internal error] After initialization the active stack must have exactly one card but it has {
+                    $@"[Internal error] After initialization the active stack must be empty but it has {
                         ActiveStack.Cards.Count} cards.");
             }
         }

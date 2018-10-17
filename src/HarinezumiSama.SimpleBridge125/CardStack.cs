@@ -79,6 +79,45 @@ namespace HarinezumiSama.SimpleBridge125
             return result;
         }
 
+        public List<PlayingCard> WithdrawAllCardsExceptTopCardWithSameRank()
+        {
+            EnsureConsistency();
+
+            if (IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $@"Unable to withdraw all cards except top cards of the same rank since there are no cards in the card stack {
+                        GetType().GetFullName().ToUIString()}.");
+            }
+
+            var topCardIndex = _innerCards.Count - 1;
+            var topCardRank = _innerCards[topCardIndex].Rank;
+
+            var count = topCardIndex;
+            while (count > 0)
+            {
+                if (_innerCards[count - 1].Rank != topCardRank)
+                {
+                    break;
+                }
+
+                count--;
+            }
+
+            var result = _innerCards.Take(count).ToList();
+            var remaining = _innerCards.Skip(count).ToArray();
+
+            _innerCards.Clear();
+            _innerCards.AddRange(remaining);
+
+            _uniqueCards.Clear();
+            _uniqueCards.UnionWith(remaining);
+
+            EnsureConsistency();
+
+            return result;
+        }
+
         public void DepositCardOnTop(PlayingCard card)
         {
             EnsureConsistency();

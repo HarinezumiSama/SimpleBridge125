@@ -11,7 +11,7 @@ namespace HarinezumiSama.SimpleBridge125
     {
         private readonly HashSet<PlayingCard> _cards;
 
-        public Player(string name)
+        internal Player(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
             {

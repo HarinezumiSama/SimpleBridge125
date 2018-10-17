@@ -55,6 +55,7 @@
     <Compile Include="PlayingCardRankExtensions.cs" />
     <Compile Include="PlayingCardSuit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SavedGame.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
