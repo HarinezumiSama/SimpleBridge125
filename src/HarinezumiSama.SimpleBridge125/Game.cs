@@ -21,9 +21,12 @@ namespace HarinezumiSama.SimpleBridge125
             {
                 throw new ArgumentNullException(nameof(playerNames));
             }
-            if (playerNames.Any(item => item is null))
+
+            if (playerNames.Any(string.IsNullOrWhiteSpace))
             {
-                throw new ArgumentException(@"The collection contains a null element.", nameof(playerNames));
+                throw new ArgumentException(
+                    @"The collection contains a null or blank player name.",
+                    nameof(playerNames));
             }
 
             if (playerNames.Count < MinPlayerCount || playerNames.Count > MaxPlayerCount)
@@ -208,8 +211,10 @@ namespace HarinezumiSama.SimpleBridge125
                 MoveToNextPlayer(false);
             }
 
-            foreach (var card in move.Cards)
+            for (var index = 0; index < move.Cards.Count; index++)
             {
+                var card = move.Cards[index];
+
                 if (!CurrentPlayer.Cards.Contains(card))
                 {
                     throw new ArgumentException(
@@ -240,7 +245,7 @@ namespace HarinezumiSama.SimpleBridge125
                         break;
 
                     case PlayingCardRank.Queen:
-                        if (card.Suit == PlayingCardSuit.Spades)
+                        if (card.Suit == PlayingCardSuit.Spades && index == move.Cards.Count - 1)
                         {
                             DrawCardsToVictimPlayer(5);
                             MoveToNextPlayer(true);
@@ -268,7 +273,7 @@ namespace HarinezumiSama.SimpleBridge125
             RequiredFirstCard = null;
         }
 
-        private bool CanDeclareBridgeWith([NotNull] Move move)
+        public bool CanDeclareBridgeWith([NotNull] Move move)
         {
             var rank = move.FirstCard.Rank;
 
