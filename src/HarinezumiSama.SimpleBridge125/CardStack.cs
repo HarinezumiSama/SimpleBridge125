@@ -15,7 +15,7 @@ namespace HarinezumiSama.SimpleBridge125
         private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
 
         private static readonly RandomNumberGenerator RandomNumberGenerator = RandomNumberGenerator.Create();
-        private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(int)];
+        private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(uint)];
 
         private readonly HashSet<PlayingCard> _uniqueCards;
 
