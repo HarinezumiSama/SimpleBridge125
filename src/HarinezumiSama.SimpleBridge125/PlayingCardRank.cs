@@ -1,15 +1,14 @@
-﻿namespace HarinezumiSama.SimpleBridge125
+﻿namespace HarinezumiSama.SimpleBridge125;
+
+public enum PlayingCardRank
 {
-    public enum PlayingCardRank
-    {
-        Six,
-        Seven,
-        Eight,
-        Nine,
-        Ten,
-        Jack,
-        Queen,
-        King,
-        Ace
-    }
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Ace
 }

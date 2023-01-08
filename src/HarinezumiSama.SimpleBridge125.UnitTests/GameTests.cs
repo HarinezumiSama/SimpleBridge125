@@ -1,34 +1,33 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace HarinezumiSama.SimpleBridge125.UnitTests
+namespace HarinezumiSama.SimpleBridge125.UnitTests;
+
+[TestFixture]
+internal sealed class GameTests
 {
-    [TestFixture]
-    internal sealed class GameTests
+    [Test]
+    [TestCase(new object[] { new[] { "John Doe", "Jill Doe" } })]
+    public void TestConstructionWithValidArgument(string[] playerNames)
     {
-        [Test]
-        [TestCase(new object[] { new[] { "John Doe", "Jill Doe" } })]
-        public void TestConstructionWithValidArgument(string[] playerNames)
-        {
-            var game = new Game(playerNames);
+        var game = new Game(playerNames);
 
-            Assert.That(game.Players, Is.Not.Null);
-            Assert.That(game.Players.Count, Is.EqualTo(playerNames.Length));
-            Assert.That(game.CurrentDealerIndex, Is.EqualTo(0));
-            Assert.That(game.PointsRatio, Is.EqualTo(1));
-            Assert.That(game.ActiveStack.Cards.Count, Is.EqualTo(0));
-            Assert.That(game.RequiredFirstCard, Is.Not.Null);
-        }
+        Assert.That(game.Players, Is.Not.Null);
+        Assert.That(game.Players.Count, Is.EqualTo(playerNames.Length));
+        Assert.That(game.CurrentDealerIndex, Is.EqualTo(0));
+        Assert.That(game.PointsRatio, Is.EqualTo(1));
+        Assert.That(game.ActiveStack.Cards.Count, Is.EqualTo(0));
+        Assert.That(game.RequiredFirstCard, Is.Not.Null);
+    }
 
-        [Test]
-        public void TestConstructionWithInvalidArgument()
-        {
-            Assert.That(() => new Game(null!), Throws.ArgumentNullException);
+    [Test]
+    public void TestConstructionWithInvalidArgument()
+    {
+        Assert.That(() => new Game(null!), Throws.ArgumentNullException);
 
-            Assert.That(() => new Game(Array.Empty<string>()), Throws.TypeOf<ArgumentOutOfRangeException>());
-            Assert.That(() => new Game(new[] { "One player" }), Throws.TypeOf<ArgumentOutOfRangeException>());
-            Assert.That(() => new Game(new[] { "One player", null! }), Throws.ArgumentException);
-            Assert.That(() => new Game(new[] { "One player", string.Empty }), Throws.ArgumentException);
-        }
+        Assert.That(() => new Game(Array.Empty<string>()), Throws.TypeOf<ArgumentOutOfRangeException>());
+        Assert.That(() => new Game(new[] { "One player" }), Throws.TypeOf<ArgumentOutOfRangeException>());
+        Assert.That(() => new Game(new[] { "One player", null! }), Throws.ArgumentException);
+        Assert.That(() => new Game(new[] { "One player", string.Empty }), Throws.ArgumentException);
     }
 }

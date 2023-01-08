@@ -1,10 +1,9 @@
-﻿namespace HarinezumiSama.SimpleBridge125
+﻿namespace HarinezumiSama.SimpleBridge125;
+
+public enum PlayingCardSuit
 {
-    public enum PlayingCardSuit
-    {
-        Spades,
-        Clubs,
-        Diamonds,
-        Hearts
-    }
+    Spades,
+    Clubs,
+    Diamonds,
+    Hearts
 }

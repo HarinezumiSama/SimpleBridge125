@@ -5,226 +5,221 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 
-namespace HarinezumiSama.SimpleBridge125
+namespace HarinezumiSama.SimpleBridge125;
+
+[DebuggerDisplay(@"{ToDebuggerString(),nq}")]
+public sealed class CardStack
 {
-    [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
-    public sealed class CardStack
+    private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
+
+    private static readonly RandomNumberGenerator RandomNumberGenerator = RandomNumberGenerator.Create();
+    private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(uint)];
+
+    private readonly HashSet<PlayingCard> _uniqueCards;
+    private readonly List<PlayingCard> _innerCards;
+
+    public CardStack(IReadOnlyList<PlayingCard> cards)
     {
-        private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
-
-        private static readonly RandomNumberGenerator RandomNumberGenerator = RandomNumberGenerator.Create();
-        private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(uint)];
-
-        private readonly HashSet<PlayingCard> _uniqueCards;
-        private readonly List<PlayingCard> _innerCards;
-
-        public CardStack(IReadOnlyList<PlayingCard> cards)
+        if (cards is null)
         {
-            if (cards is null)
-            {
-                throw new ArgumentNullException(nameof(cards));
-            }
-
-            _uniqueCards = CreateUniqueCardsWithCheck(cards);
-            _innerCards = new List<PlayingCard>(cards);
-            Cards = new ReadOnlyCollection<PlayingCard>(_innerCards);
-
-            EnsureConsistency();
+            throw new ArgumentNullException(nameof(cards));
         }
 
-        public IReadOnlyList<PlayingCard> Cards { get; }
+        _uniqueCards = CreateUniqueCardsWithCheck(cards);
+        _innerCards = new List<PlayingCard>(cards);
+        Cards = new ReadOnlyCollection<PlayingCard>(_innerCards);
 
-        public bool IsEmpty => _innerCards.Count == 0;
+        EnsureConsistency();
+    }
 
-        public override string ToString() => $@"{nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
+    public IReadOnlyList<PlayingCard> Cards { get; }
 
-        public PlayingCard WithdrawTopCard()
+    public bool IsEmpty => _innerCards.Count == 0;
+
+    public override string ToString() => $@"{nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
+
+    public PlayingCard WithdrawTopCard()
+    {
+        EnsureConsistency();
+
+        if (IsEmpty)
         {
-            EnsureConsistency();
-
-            if (IsEmpty)
-            {
-                throw new InvalidOperationException(
-                    $@"Unable to withdraw the top card since there are no cards in the card stack {
-                        GetType().GetFullName().ToUIString()}.");
-            }
-
-            var index = _innerCards.Count - 1;
-
-            var result = _innerCards[index];
-            _innerCards.RemoveAt(index);
-            _uniqueCards.Remove(result);
-
-            EnsureConsistency();
-
-            return result;
+            throw new InvalidOperationException(
+                $@"Unable to withdraw the top card since there are no cards in the card stack {
+                    GetType().GetFullName().ToUIString()}.");
         }
 
-        public List<PlayingCard> WithdrawAllCards()
+        var index = _innerCards.Count - 1;
+
+        var result = _innerCards[index];
+        _innerCards.RemoveAt(index);
+        _uniqueCards.Remove(result);
+
+        EnsureConsistency();
+
+        return result;
+    }
+
+    public List<PlayingCard> WithdrawAllCards()
+    {
+        EnsureConsistency();
+
+        var result = _innerCards.ToList();
+        _innerCards.Clear();
+        _uniqueCards.Clear();
+
+        EnsureConsistency();
+
+        return result;
+    }
+
+    public List<PlayingCard> WithdrawAllCardsExceptTopCardWithSameRank()
+    {
+        EnsureConsistency();
+
+        if (IsEmpty)
         {
-            EnsureConsistency();
-
-            var result = _innerCards.ToList();
-            _innerCards.Clear();
-            _uniqueCards.Clear();
-
-            EnsureConsistency();
-
-            return result;
+            throw new InvalidOperationException(
+                $@"Unable to withdraw all cards except top cards of the same rank since there are no cards in the card stack {
+                    GetType().GetFullName().ToUIString()}.");
         }
 
-        public List<PlayingCard> WithdrawAllCardsExceptTopCardWithSameRank()
+        var topCardIndex = _innerCards.Count - 1;
+        var topCardRank = _innerCards[topCardIndex].Rank;
+
+        var count = topCardIndex;
+        while (count > 0)
         {
-            EnsureConsistency();
-
-            if (IsEmpty)
+            if (_innerCards[count - 1].Rank != topCardRank)
             {
-                throw new InvalidOperationException(
-                    $@"Unable to withdraw all cards except top cards of the same rank since there are no cards in the card stack {
-                        GetType().GetFullName().ToUIString()}.");
+                break;
             }
 
-            var topCardIndex = _innerCards.Count - 1;
-            var topCardRank = _innerCards[topCardIndex].Rank;
-
-            var count = topCardIndex;
-            while (count > 0)
-            {
-                if (_innerCards[count - 1].Rank != topCardRank)
-                {
-                    break;
-                }
-
-                count--;
-            }
-
-            var result = _innerCards.Take(count).ToList();
-            var remaining = _innerCards.Skip(count).ToArray();
-
-            _innerCards.Clear();
-            _innerCards.AddRange(remaining);
-
-            _uniqueCards.Clear();
-            _uniqueCards.UnionWith(remaining);
-
-            EnsureConsistency();
-
-            return result;
+            count--;
         }
 
-        public void DepositCardOnTop(PlayingCard card)
+        var result = _innerCards.Take(count).ToList();
+        var remaining = _innerCards.Skip(count).ToArray();
+
+        _innerCards.Clear();
+        _innerCards.AddRange(remaining);
+
+        _uniqueCards.Clear();
+        _uniqueCards.UnionWith(remaining);
+
+        EnsureConsistency();
+
+        return result;
+    }
+
+    public void DepositCardOnTop(PlayingCard card)
+    {
+        EnsureConsistency();
+
+        _innerCards.Add(card);
+        _uniqueCards.Add(card);
+
+        EnsureConsistency();
+    }
+
+    public void Refill(IReadOnlyCollection<PlayingCard> cards)
+    {
+        if (cards is null)
         {
-            EnsureConsistency();
-
-            _innerCards.Add(card);
-            _uniqueCards.Add(card);
-
-            EnsureConsistency();
+            throw new ArgumentNullException(nameof(cards));
         }
 
-        public void Refill(IReadOnlyCollection<PlayingCard> cards)
+        EnsureConsistency();
+
+        if (!IsEmpty)
         {
-            if (cards is null)
-            {
-                throw new ArgumentNullException(nameof(cards));
-            }
-
-            EnsureConsistency();
-
-            if (!IsEmpty)
-            {
-                throw new InvalidOperationException(
-                    $@"The card stack {GetType().GetFullName().ToUIString()} cannot be refilled since it is not empty.");
-            }
-
-            var uniqueCards = CreateUniqueCardsWithCheck(cards);
-            _uniqueCards.UnionWith(uniqueCards);
-            _innerCards.AddRange(cards);
-
-            EnsureConsistency();
+            throw new InvalidOperationException(
+                $@"The card stack {GetType().GetFullName().ToUIString()} cannot be refilled since it is not empty.");
         }
 
-        public void Shuffle()
+        var uniqueCards = CreateUniqueCardsWithCheck(cards);
+        _uniqueCards.UnionWith(uniqueCards);
+        _innerCards.AddRange(cards);
+
+        EnsureConsistency();
+    }
+
+    public void Shuffle()
+    {
+        var previousCards = WithdrawAllCards();
+
+        var newCards = new List<PlayingCard>(previousCards.Count);
+        while (previousCards.Count != 0)
         {
-            var previousCards = WithdrawAllCards();
-
-            var newCards = new List<PlayingCard>(previousCards.Count);
-            while (previousCards.Count != 0)
-            {
-                var index = GetRandomIndex(previousCards.Count);
-                newCards.Add(previousCards[index]);
-                previousCards.RemoveAt(index);
-            }
-
-            Refill(newCards);
-
-            EnsureConsistency();
+            var index = GetRandomIndex(previousCards.Count);
+            newCards.Add(previousCards[index]);
+            previousCards.RemoveAt(index);
         }
 
-        private static HashSet<PlayingCard> CreateUniqueCardsWithCheck(IReadOnlyCollection<PlayingCard> cards)
+        Refill(newCards);
+
+        EnsureConsistency();
+    }
+
+    private static HashSet<PlayingCard> CreateUniqueCardsWithCheck(IReadOnlyCollection<PlayingCard> cards)
+    {
+        if (cards is null)
         {
-            if (cards is null)
-            {
-                throw new ArgumentNullException(nameof(cards));
-            }
-
-            var uniqueCards = new HashSet<PlayingCard>(cards);
-            if (uniqueCards.Count != cards.Count)
-            {
-                throw new ArgumentException("The collection contains duplicate cards.", nameof(cards));
-            }
-
-            return uniqueCards;
+            throw new ArgumentNullException(nameof(cards));
         }
 
-        private static int GetRandomIndex(int count)
+        var uniqueCards = new HashSet<PlayingCard>(cards);
+        if (uniqueCards.Count != cards.Count)
         {
-            if (count <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count), count, @"The value must be positive.");
-            }
+            throw new ArgumentException("The collection contains duplicate cards.", nameof(cards));
+        }
 
-            if (count == 1)
-            {
+        return uniqueCards;
+    }
+
+    private static int GetRandomIndex(int count)
+    {
+        switch (count)
+        {
+            case <= 0:
+                throw new ArgumentOutOfRangeException(nameof(count), count, @"The value must be greater than zero.");
+            case 1:
                 return 0;
-            }
-
-            uint value;
-            lock (RandomNumberGenerator)
-            {
-                RandomNumberGenerator.GetBytes(RandomNumberGeneratorStore);
-                value = BitConverter.ToUInt32(RandomNumberGeneratorStore, 0);
-            }
-
-            var result = Convert.ToInt32(value % count);
-            return result;
         }
 
-        private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
-
-        private void EnsureConsistency()
+        uint value;
+        lock (RandomNumberGenerator)
         {
-            if (_uniqueCards.Count != _innerCards.Count)
-            {
-                throw new InvalidOperationException(
-                    $@"{InconsistencyErrorMessagePrefix} (unique cards: {_uniqueCards.Count}, cards: {
-                        _innerCards.Count}).");
-            }
-
-            EnsureStricterConsistency();
+            RandomNumberGenerator.GetBytes(RandomNumberGeneratorStore);
+            value = BitConverter.ToUInt32(RandomNumberGeneratorStore, 0);
         }
 
-        [Conditional(@"DEBUG")]
-        private void EnsureStricterConsistency()
+        var result = Convert.ToInt32(value % count);
+        return result;
+    }
+
+    private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
+
+    private void EnsureConsistency()
+    {
+        if (_uniqueCards.Count != _innerCards.Count)
         {
-            //// ReSharper disable once LoopCanBePartlyConvertedToQuery
-            foreach (var card in _innerCards)
+            throw new InvalidOperationException($@"{InconsistencyErrorMessagePrefix} (unique cards: {_uniqueCards.Count}, cards: {_innerCards.Count}).");
+        }
+
+        EnsureStricterConsistency();
+    }
+
+    [Conditional(@"DEBUG")]
+    private void EnsureStricterConsistency()
+    {
+        //// ReSharper disable once LoopCanBePartlyConvertedToQuery
+        //// ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+        foreach (var card in _innerCards)
+        {
+            if (!_uniqueCards.Contains(card))
             {
-                if (!_uniqueCards.Contains(card))
-                {
-                    throw new InvalidOperationException(
-                        $@"{InconsistencyErrorMessagePrefix} card {card} is not found among the unique cards.");
-                }
+                throw new InvalidOperationException($@"{InconsistencyErrorMessagePrefix} card {card} is not found among the unique cards.");
             }
         }
     }
