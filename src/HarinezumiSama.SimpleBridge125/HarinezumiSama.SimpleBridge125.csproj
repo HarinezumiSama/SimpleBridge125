@@ -2,14 +2,10 @@
 
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net472</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Omnifactotum" Version="0.3.0.119" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
+        <PackageReference Include="Omnifactotum" Version="0.11.0" />
     </ItemGroup>
 </Project>
