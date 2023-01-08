@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Omnifactotum.Annotations;
 
 namespace HarinezumiSama.SimpleBridge125
 {
-    //// ReSharper disable once UseNameofExpression :: False positive
-    [DebuggerDisplay(@"{ToDebugString(),nq}")]
+    [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
     public sealed class Game
     {
         private const int MinPlayerCount = 2;
@@ -15,7 +13,7 @@ namespace HarinezumiSama.SimpleBridge125
 
         private const int CardsPerPlayer = 5;
 
-        public Game([NotNull] IReadOnlyCollection<string> playerNames)
+        public Game(IReadOnlyCollection<string> playerNames)
         {
             if (playerNames is null)
             {
@@ -48,61 +46,32 @@ namespace HarinezumiSama.SimpleBridge125
             Initialize();
         }
 
-        public IReadOnlyList<Player> Players
-        {
-            get;
-        }
+        public IReadOnlyList<Player> Players { get; }
 
-        public CardStack DrawingStack
-        {
-            get;
-        }
+        public CardStack DrawingStack { get; }
 
-        public CardStack ActiveStack
-        {
-            get;
-        }
+        public CardStack ActiveStack { get; }
 
-        public int CurrentDealerIndex
-        {
-            get;
-            private set;
-        }
+        public int CurrentDealerIndex { get; private set; }
 
         public Player CurrentDealer => Players[CurrentDealerIndex];
 
-        public int CurrentPlayerIndex
-        {
-            get;
-            private set;
-        }
+        public int CurrentPlayerIndex { get; private set; }
 
         public Player CurrentPlayer => Players[CurrentPlayerIndex];
 
-        public Move LastMove
-        {
-            get;
-            private set;
-        }
+        public Move? LastMove { get; private set; }
 
-        public int PointsRatio
-        {
-            get;
-            private set;
-        }
+        public int PointsRatio { get; private set; }
 
-        public PlayingCard? RequiredFirstCard
-        {
-            get;
-            private set;
-        }
+        public PlayingCard? RequiredFirstCard { get; private set; }
 
         public override string ToString()
             => $@"{nameof(Players)}.{nameof(Players.Count)} = {Players.Count}, {nameof(CurrentDealerIndex)} = {
                 CurrentDealerIndex}, {nameof(PointsRatio)} = {PointsRatio}, {nameof(DrawingStack)}.{
-                nameof(DrawingStack.Cards)}.{nameof(DrawingStack.Cards.Count)} = {DrawingStack.Cards.Count}, {
-                nameof(ActiveStack)}.{nameof(ActiveStack.Cards)}.{nameof(ActiveStack.Cards.Count)} = {
-                ActiveStack.Cards.Count}";
+                    nameof(DrawingStack.Cards)}.{nameof(DrawingStack.Cards.Count)} = {DrawingStack.Cards.Count}, {
+                        nameof(ActiveStack)}.{nameof(ActiveStack.Cards)}.{nameof(ActiveStack.Cards.Count)} = {
+                            ActiveStack.Cards.Count}";
 
         public HashSet<PlayingCard> GetValidMoveCards()
         {
@@ -133,7 +102,7 @@ namespace HarinezumiSama.SimpleBridge125
             return result;
         }
 
-        public void MakeMove([NotNull] Move move)
+        public void MakeMove(Move move)
         {
             if (move is null)
             {
@@ -157,7 +126,7 @@ namespace HarinezumiSama.SimpleBridge125
                 throw new ArgumentException(
                     $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
                         move.FirstCard} as this card is invalid for the current game state (valid cards: {
-                        validMoveCardsString}).",
+                            validMoveCardsString}).",
                     nameof(move));
             }
 
@@ -273,7 +242,7 @@ namespace HarinezumiSama.SimpleBridge125
             RequiredFirstCard = null;
         }
 
-        public bool CanDeclareBridgeWith([NotNull] Move move)
+        public bool CanDeclareBridgeWith(Move move)
         {
             var rank = move.FirstCard.Rank;
 
@@ -327,7 +296,7 @@ namespace HarinezumiSama.SimpleBridge125
             return result;
         }
 
-        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
+        private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
 
         private void Initialize()
         {

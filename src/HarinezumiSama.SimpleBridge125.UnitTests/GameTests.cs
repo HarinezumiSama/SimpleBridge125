@@ -23,12 +23,11 @@ namespace HarinezumiSama.SimpleBridge125.UnitTests
         [Test]
         public void TestConstructionWithInvalidArgument()
         {
-            //// ReSharper disable once AssignNullToNotNullAttribute - Negative test case
-            Assert.That(() => new Game(null), Throws.ArgumentNullException);
+            Assert.That(() => new Game(null!), Throws.ArgumentNullException);
 
-            Assert.That(() => new Game(new string[0]), Throws.TypeOf<ArgumentOutOfRangeException>());
+            Assert.That(() => new Game(Array.Empty<string>()), Throws.TypeOf<ArgumentOutOfRangeException>());
             Assert.That(() => new Game(new[] { "One player" }), Throws.TypeOf<ArgumentOutOfRangeException>());
-            Assert.That(() => new Game(new[] { "One player", null }), Throws.ArgumentException);
+            Assert.That(() => new Game(new[] { "One player", null! }), Throws.ArgumentException);
             Assert.That(() => new Game(new[] { "One player", string.Empty }), Throws.ArgumentException);
         }
     }

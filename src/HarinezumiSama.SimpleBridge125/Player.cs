@@ -5,8 +5,7 @@ using Omnifactotum;
 
 namespace HarinezumiSama.SimpleBridge125
 {
-    //// ReSharper disable once UseNameofExpression :: False positive
-    [DebuggerDisplay(@"{ToDebugString(),nq}")]
+    [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
     public sealed class Player
     {
         private readonly HashSet<PlayingCard> _cards;
@@ -27,21 +26,11 @@ namespace HarinezumiSama.SimpleBridge125
             Score = 0;
         }
 
-        public string Name
-        {
-            get;
-        }
+        public string Name { get; }
 
-        public int Score
-        {
-            get;
-            private set;
-        }
+        public int Score { get; private set; }
 
-        public ReadOnlySet<PlayingCard> Cards
-        {
-            get;
-        }
+        public ReadOnlySet<PlayingCard> Cards { get; }
 
         public void AppendCard(PlayingCard card)
         {
@@ -63,6 +52,6 @@ namespace HarinezumiSama.SimpleBridge125
             => $@"{nameof(Name)} = {Name.ToUIString()}, {nameof(Score)} = {Score}, {nameof(Cards)}.{
                 nameof(Cards.Count)} = {Cards.Count}";
 
-        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
+        private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
     }
 }

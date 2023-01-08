@@ -5,7 +5,7 @@ namespace HarinezumiSama.SimpleBridge125
     public static class PlayingCardRankExtensions
     {
         private static readonly Dictionary<PlayingCardRank, string> Strings =
-            new Dictionary<PlayingCardRank, string>
+            new()
             {
                 { PlayingCardRank.Six, "6" },
                 { PlayingCardRank.Seven, "7" },

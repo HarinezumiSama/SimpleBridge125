@@ -4,12 +4,10 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
-using Omnifactotum.Annotations;
 
 namespace HarinezumiSama.SimpleBridge125
 {
-    //// ReSharper disable once UseNameofExpression :: False positive
-    [DebuggerDisplay(@"{ToDebugString(),nq}")]
+    [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
     public sealed class CardStack
     {
         private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
@@ -18,10 +16,9 @@ namespace HarinezumiSama.SimpleBridge125
         private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(uint)];
 
         private readonly HashSet<PlayingCard> _uniqueCards;
-
         private readonly List<PlayingCard> _innerCards;
 
-        public CardStack([NotNull] IReadOnlyList<PlayingCard> cards)
+        public CardStack(IReadOnlyList<PlayingCard> cards)
         {
             if (cards is null)
             {
@@ -35,10 +32,7 @@ namespace HarinezumiSama.SimpleBridge125
             EnsureConsistency();
         }
 
-        public IReadOnlyList<PlayingCard> Cards
-        {
-            get;
-        }
+        public IReadOnlyList<PlayingCard> Cards { get; }
 
         public bool IsEmpty => _innerCards.Count == 0;
 
@@ -128,7 +122,7 @@ namespace HarinezumiSama.SimpleBridge125
             EnsureConsistency();
         }
 
-        public void Refill([NotNull] IReadOnlyCollection<PlayingCard> cards)
+        public void Refill(IReadOnlyCollection<PlayingCard> cards)
         {
             if (cards is null)
             {
@@ -167,8 +161,7 @@ namespace HarinezumiSama.SimpleBridge125
             EnsureConsistency();
         }
 
-        private static HashSet<PlayingCard> CreateUniqueCardsWithCheck(
-            [NotNull] IReadOnlyCollection<PlayingCard> cards)
+        private static HashSet<PlayingCard> CreateUniqueCardsWithCheck(IReadOnlyCollection<PlayingCard> cards)
         {
             if (cards is null)
             {
@@ -207,7 +200,7 @@ namespace HarinezumiSama.SimpleBridge125
             return result;
         }
 
-        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
+        private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
 
         private void EnsureConsistency()
         {

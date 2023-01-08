@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Project>
+    <PropertyGroup>
+        <Version>0.0.1</Version>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <VersionSuffix>-debug</VersionSuffix>
+        <BuildDateYear>$([System.String]::Format("{0:yyyy}", $([System.DateTime]::UtcNow)))</BuildDateYear>
+        <IsAppveyorBuild>false</IsAppveyorBuild>
+    </PropertyGroup>
+
+    <Target Name="CheckBuildPropertiesBeforeBuild" BeforeTargets="Clean;Build;Restore">
+        <Message
+            Text="[$(MSBuildProjectName):$(TargetFramework):$(Configuration):$(Platform)] NETCoreSdkVersion = &quot;$(NETCoreSdkVersion)&quot;, SolutionDir = &quot;$(SolutionDir)&quot;, SolutionName = &quot;$(SolutionName)&quot;"
+            Importance="high" />
+
+        <Error Condition="'$(SolutionDir)' == '' Or '$(SolutionName)' == '' Or '$(SolutionDir)' == '*Undefined*' Or '$(SolutionName)' == '*Undefined*'"
+            Text="[$(MSBuildProjectName):$(TargetFramework):$(Configuration):$(Platform)] Individual projects cannot be built. Please build the entire solution." />
+    </Target>
+
+    <Target Name="PrintBuildPropertiesBeforeBuild" BeforeTargets="Build">
+        <Message
+            Text="AssemblyVersion = &quot;$(AssemblyVersion)&quot;, InformationalVersion = &quot;$(InformationalVersion)&quot;"
+            Importance="high" />
+    </Target>
+
+    <PropertyGroup>
+        <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>10.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <RunSettingsFilePath>$(SolutionDir)$(SolutionName).runsettings</RunSettingsFilePath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>portable</DebugType>
+        <EmbedAllSources>true</EmbedAllSources>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Authors>Vitalii Maklai</Authors>
+        <Company>$(Authors)</Company>
+        <Product>$(SolutionName)</Product>
+        <Description>Simple Bridge-125 card game.</Description>
+        <Copyright>Copyright © $(Authors) 2018-$(BuildDateYear)</Copyright>
+        <RepositoryUrl>https://github.com/HarinezumiSama/$(SolutionName)</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <__TestResultsSubdirectory>TestResults</__TestResultsSubdirectory>
+        <__RootSolutionOutputPathBase>$(SolutionDir)\.out</__RootSolutionOutputPathBase>
+        <__RootSolutionOutputPath>$([System.IO.Path]::GetFullPath($(__RootSolutionOutputPathBase)))</__RootSolutionOutputPath>
+        <OutputPath>$(__RootSolutionOutputPath)\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
+        <BaseIntermediateOutputPath>$(__RootSolutionOutputPath)\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+        <PackageOutputPath>$(__RootSolutionOutputPath)\NuGet\</PackageOutputPath>
+        <VSTestResultsDirectory>$(OutputPath)$(__TestResultsSubdirectory)</VSTestResultsDirectory>
+    </PropertyGroup>
+
+    <Target Name="CleanTestResults" AfterTargets="Clean">
+        <RemoveDir Directories="$(VSTestResultsDirectory)" Condition="Exists($(VSTestResultsDirectory))" ContinueOnError="true" />
+    </Target>
+
+    <PropertyGroup>
+        <AssemblyVersion>$(Version).0</AssemblyVersion>
+        <FileVersion>$(Version).0</FileVersion>
+        <InformationalVersion>$(Version)$(VersionSuffix)</InformationalVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <SignAssembly>false</SignAssembly>
+        <DelaySign>false</DelaySign>
+    </PropertyGroup>
+</Project>

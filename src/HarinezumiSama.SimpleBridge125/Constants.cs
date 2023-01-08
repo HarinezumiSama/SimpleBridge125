@@ -16,7 +16,7 @@ namespace HarinezumiSama.SimpleBridge125
         public static class Cards
         {
             public static readonly IReadOnlyList<PlayingCard> All = CreateAll();
-            public static readonly IReadOnlyList<PlayingCard> Empty = new PlayingCard[0].AsReadOnly();
+            public static readonly IReadOnlyList<PlayingCard> Empty = Array.Empty<PlayingCard>().AsReadOnly();
 
             public static readonly IReadOnlyList<PlayingCard> Trump =
                 All.Where(card => card.Rank == PlayingCardRank.Jack).ToArray().AsReadOnly();
@@ -27,9 +27,7 @@ namespace HarinezumiSama.SimpleBridge125
                         .GetAllValues<PlayingCardSuit>()
                         .ToDictionary(
                             suit => suit,
-                            suit =>
-                                (IReadOnlyList<PlayingCard>)
-                                    All.Where(card => card.Suit == suit).ToArray().AsReadOnly()));
+                            suit => (IReadOnlyList<PlayingCard>)All.Where(card => card.Suit == suit).ToArray().AsReadOnly()));
 
             public static readonly IReadOnlyDictionary<PlayingCardRank, IReadOnlyList<PlayingCard>> ByRank =
                 new System.Collections.ObjectModel.ReadOnlyDictionary<PlayingCardRank, IReadOnlyList<PlayingCard>>(
@@ -37,9 +35,7 @@ namespace HarinezumiSama.SimpleBridge125
                         .GetAllValues<PlayingCardRank>()
                         .ToDictionary(
                             rank => rank,
-                            rank =>
-                                (IReadOnlyList<PlayingCard>)
-                                    All.Where(card => card.Rank == rank).ToArray().AsReadOnly()));
+                            rank => (IReadOnlyList<PlayingCard>)All.Where(card => card.Rank == rank).ToArray().AsReadOnly()));
 
             private static IReadOnlyList<PlayingCard> CreateAll()
             {

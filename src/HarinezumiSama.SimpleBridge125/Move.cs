@@ -2,18 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Omnifactotum.Annotations;
 
 namespace HarinezumiSama.SimpleBridge125
 {
-    //// ReSharper disable once UseNameofExpression :: False positive
-    [DebuggerDisplay(@"{ToDebugString(),nq}")]
+    [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
     public sealed class Move
     {
-        public Move(
-            [NotNull] IReadOnlyList<PlayingCard> cards,
-            bool isBridgeDeclared,
-            PlayingCardSuit? requestedSuit)
+        public Move(IReadOnlyList<PlayingCard> cards, bool isBridgeDeclared, PlayingCardSuit? requestedSuit)
         {
             if (cards is null)
             {
@@ -60,36 +55,20 @@ namespace HarinezumiSama.SimpleBridge125
             RequestedSuit = requestedSuit;
         }
 
-        [NotNull]
-        public IReadOnlyList<PlayingCard> Cards
-        {
-            get;
-        }
+        public IReadOnlyList<PlayingCard> Cards { get; }
 
-        public PlayingCard FirstCard
-        {
-            get;
-        }
+        public PlayingCard FirstCard { get; }
 
-        public PlayingCard LastCard
-        {
-            get;
-        }
+        public PlayingCard LastCard { get; }
 
-        public bool IsBridgeDeclared
-        {
-            get;
-        }
+        public bool IsBridgeDeclared { get; }
 
-        public PlayingCardSuit? RequestedSuit
-        {
-            get;
-        }
+        public PlayingCardSuit? RequestedSuit { get; }
 
         public override string ToString()
             => $@"{nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}, {nameof(IsBridgeDeclared)} = {
                 IsBridgeDeclared}, {nameof(RequestedSuit)} = {RequestedSuit.ToUIString()}";
 
-        private string ToDebugString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
+        private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
     }
 }

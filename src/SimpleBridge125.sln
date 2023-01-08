@@ -1,8 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
-MinimumVisualStudioVersion = 15.0.0.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
+MinimumVisualStudioVersion = 16.0.0.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{CE87BC06-2C53-4508-A6F4-E9E3FF9EB5C3}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		SimpleBridge125.runsettings = SimpleBridge125.runsettings
+		..\.editorconfig = ..\.editorconfig
+		..\.gitignore = ..\.gitignore
+		SimpleBridge125.sln.DotSettings = SimpleBridge125.sln.DotSettings
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarinezumiSama.SimpleBridge125", "HarinezumiSama.SimpleBridge125\HarinezumiSama.SimpleBridge125.csproj", "{077644B7-16C4-4365-81CF-19DF8A0FC181}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarinezumiSama.SimpleBridge125.UnitTests", "HarinezumiSama.SimpleBridge125.UnitTests\HarinezumiSama.SimpleBridge125.UnitTests.csproj", "{C95D7319-07D7-4A3A-8681-3F33DE6FA861}"

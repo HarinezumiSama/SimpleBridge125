@@ -5,7 +5,7 @@ namespace HarinezumiSama.SimpleBridge125
     public static class PlayingCardSuitExtensions
     {
         private static readonly Dictionary<PlayingCardSuit, string> Strings =
-            new Dictionary<PlayingCardSuit, string>
+            new()
             {
                 { PlayingCardSuit.Spades, "♠" },
                 { PlayingCardSuit.Clubs, "♣" },
