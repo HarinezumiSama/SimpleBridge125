@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using HarinezumiSama.SimpleBridge125.Abstractions;
 
 namespace HarinezumiSama.SimpleBridge125;
 
@@ -13,8 +14,13 @@ public sealed class Game
 
     private const int CardsPerPlayer = 5;
 
-    public Game(IReadOnlyCollection<string> playerNames)
+    public Game(IRandomNumberProvider randomNumberProvider, IReadOnlyCollection<string> playerNames)
     {
+        if (randomNumberProvider is null)
+        {
+            throw new ArgumentNullException(nameof(randomNumberProvider));
+        }
+
         if (playerNames is null)
         {
             throw new ArgumentNullException(nameof(playerNames));
@@ -22,9 +28,7 @@ public sealed class Game
 
         if (playerNames.Any(string.IsNullOrWhiteSpace))
         {
-            throw new ArgumentException(
-                @"The collection contains a null or blank player name.",
-                nameof(playerNames));
+            throw new ArgumentException(@"The collection contains a null or blank player name.", nameof(playerNames));
         }
 
         if (playerNames.Count is < MinPlayerCount or > MaxPlayerCount)
@@ -36,8 +40,8 @@ public sealed class Game
         }
 
         Players = playerNames.Select(name => new Player(name)).ToArray().AsReadOnly();
-        DrawingStack = new CardStack(Constants.Cards.All);
-        ActiveStack = new CardStack(Constants.Cards.Empty);
+        DrawingStack = new CardStack(randomNumberProvider, Constants.Cards.All);
+        ActiveStack = new CardStack(randomNumberProvider, Constants.Cards.Empty);
         CurrentDealerIndex = 0;
         CurrentPlayerIndex = 0;
         PointsRatio = 1;
@@ -287,6 +291,11 @@ public sealed class Game
         if (DrawingStack.IsEmpty)
         {
             var refillCards = ActiveStack.WithdrawAllCardsExceptTopCardWithSameRank();
+            if (refillCards.Count == 0)
+            {
+                throw new NotImplementedException("TODO: End the game and calculate the points.");
+            }
+
             DrawingStack.Refill(refillCards);
             DrawingStack.Shuffle();
 
@@ -321,8 +330,7 @@ public sealed class Game
         if (ActiveStack.Cards.Count != 0)
         {
             throw new InvalidOperationException(
-                $@"[Internal error] After initialization the active stack must be empty but it has {
-                    ActiveStack.Cards.Count} cards.");
+                $@"[Internal error] After initialization the active stack must be empty but it has {ActiveStack.Cards.Count} cards.");
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
+using HarinezumiSama.SimpleBridge125.Abstractions;
 
 namespace HarinezumiSama.SimpleBridge125;
 
@@ -12,18 +12,18 @@ public sealed class CardStack
 {
     private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
 
-    private static readonly RandomNumberGenerator RandomNumberGenerator = RandomNumberGenerator.Create();
-    private static readonly byte[] RandomNumberGeneratorStore = new byte[sizeof(uint)];
-
+    private readonly IRandomNumberProvider _randomNumberProvider;
     private readonly HashSet<PlayingCard> _uniqueCards;
     private readonly List<PlayingCard> _innerCards;
 
-    public CardStack(IReadOnlyList<PlayingCard> cards)
+    public CardStack(IRandomNumberProvider randomNumberProvider, IReadOnlyList<PlayingCard> cards)
     {
         if (cards is null)
         {
             throw new ArgumentNullException(nameof(cards));
         }
+
+        _randomNumberProvider = randomNumberProvider ?? throw new ArgumentNullException(nameof(randomNumberProvider));
 
         _uniqueCards = CreateUniqueCardsWithCheck(cards);
         _innerCards = new List<PlayingCard>(cards);
@@ -151,7 +151,7 @@ public sealed class CardStack
         var newCards = new List<PlayingCard>(previousCards.Count);
         while (previousCards.Count != 0)
         {
-            var index = GetRandomIndex(previousCards.Count);
+            var index = _randomNumberProvider.GetZeroBasedRandomNumber(previousCards.Count);
             newCards.Add(previousCards[index]);
             previousCards.RemoveAt(index);
         }
@@ -175,27 +175,6 @@ public sealed class CardStack
         }
 
         return uniqueCards;
-    }
-
-    private static int GetRandomIndex(int count)
-    {
-        switch (count)
-        {
-            case <= 0:
-                throw new ArgumentOutOfRangeException(nameof(count), count, @"The value must be greater than zero.");
-            case 1:
-                return 0;
-        }
-
-        uint value;
-        lock (RandomNumberGenerator)
-        {
-            RandomNumberGenerator.GetBytes(RandomNumberGeneratorStore);
-            value = BitConverter.ToUInt32(RandomNumberGeneratorStore, 0);
-        }
-
-        var result = Convert.ToInt32(value % count);
-        return result;
     }
 
     private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
