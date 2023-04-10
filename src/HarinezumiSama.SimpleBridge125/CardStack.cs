@@ -13,10 +13,10 @@ public sealed class CardStack
     private const string InconsistencyErrorMessagePrefix = "[Internal error] Inconsistency has been detected";
 
     private readonly IRandomNumberProvider _randomNumberProvider;
-    private readonly HashSet<PlayingCard> _uniqueCards;
-    private readonly List<PlayingCard> _innerCards;
+    private readonly HashSet<Card> _uniqueCards;
+    private readonly List<Card> _innerCards;
 
-    public CardStack(IRandomNumberProvider randomNumberProvider, IReadOnlyList<PlayingCard> cards)
+    public CardStack(IRandomNumberProvider randomNumberProvider, IReadOnlyList<Card> cards)
     {
         if (cards is null)
         {
@@ -26,19 +26,19 @@ public sealed class CardStack
         _randomNumberProvider = randomNumberProvider ?? throw new ArgumentNullException(nameof(randomNumberProvider));
 
         _uniqueCards = CreateUniqueCardsWithCheck(cards);
-        _innerCards = new List<PlayingCard>(cards);
-        Cards = new ReadOnlyCollection<PlayingCard>(_innerCards);
+        _innerCards = new List<Card>(cards);
+        Cards = new ReadOnlyCollection<Card>(_innerCards);
 
         EnsureConsistency();
     }
 
-    public IReadOnlyList<PlayingCard> Cards { get; }
+    public IReadOnlyList<Card> Cards { get; }
 
     public bool IsEmpty => _innerCards.Count == 0;
 
     public override string ToString() => $@"{nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
 
-    public PlayingCard WithdrawTopCard()
+    public Card WithdrawTopCard()
     {
         EnsureConsistency();
 
@@ -60,7 +60,7 @@ public sealed class CardStack
         return result;
     }
 
-    public List<PlayingCard> WithdrawAllCards()
+    public List<Card> WithdrawAllCards()
     {
         EnsureConsistency();
 
@@ -73,7 +73,7 @@ public sealed class CardStack
         return result;
     }
 
-    public List<PlayingCard> WithdrawAllCardsExceptTopCardWithSameRank()
+    public List<Card> WithdrawAllCardsExceptTopCardWithSameRank()
     {
         EnsureConsistency();
 
@@ -112,7 +112,7 @@ public sealed class CardStack
         return result;
     }
 
-    public void DepositCardOnTop(PlayingCard card)
+    public void DepositCardOnTop(Card card)
     {
         EnsureConsistency();
 
@@ -122,7 +122,7 @@ public sealed class CardStack
         EnsureConsistency();
     }
 
-    public void Refill(IReadOnlyCollection<PlayingCard> cards)
+    public void Refill(IReadOnlyCollection<Card> cards)
     {
         if (cards is null)
         {
@@ -148,7 +148,7 @@ public sealed class CardStack
     {
         var previousCards = WithdrawAllCards();
 
-        var newCards = new List<PlayingCard>(previousCards.Count);
+        var newCards = new List<Card>(previousCards.Count);
         while (previousCards.Count != 0)
         {
             var index = _randomNumberProvider.GetZeroBasedRandomNumber(previousCards.Count);
@@ -161,14 +161,14 @@ public sealed class CardStack
         EnsureConsistency();
     }
 
-    private static HashSet<PlayingCard> CreateUniqueCardsWithCheck(IReadOnlyCollection<PlayingCard> cards)
+    private static HashSet<Card> CreateUniqueCardsWithCheck(IReadOnlyCollection<Card> cards)
     {
         if (cards is null)
         {
             throw new ArgumentNullException(nameof(cards));
         }
 
-        var uniqueCards = new HashSet<PlayingCard>(cards);
+        var uniqueCards = new HashSet<Card>(cards);
         if (uniqueCards.Count != cards.Count)
         {
             throw new ArgumentException("The collection contains duplicate cards.", nameof(cards));

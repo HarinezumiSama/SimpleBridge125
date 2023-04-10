@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using HarinezumiSama.SimpleBridge125.Abstractions;
+using Omnifactotum;
 
 namespace HarinezumiSama.SimpleBridge125;
 
@@ -14,7 +15,10 @@ public sealed class Game
 
     private const int CardsPerPlayer = 5;
 
-    public Game(IRandomNumberProvider randomNumberProvider, IReadOnlyCollection<string> playerNames)
+    private readonly List<PlayerMove> _playerMoves;
+    private readonly HashSet<Card> _validMoveCards;
+
+    public Game(IRandomNumberProvider randomNumberProvider, IReadOnlyList<string> playerNames)
     {
         if (randomNumberProvider is null)
         {
@@ -41,14 +45,23 @@ public sealed class Game
 
         Players = playerNames.Select(name => new Player(name)).ToArray().AsReadOnly();
         DrawingStack = new CardStack(randomNumberProvider, Constants.Cards.All);
-        ActiveStack = new CardStack(randomNumberProvider, Constants.Cards.Empty);
+        ActiveStack = new CardStack(randomNumberProvider, Constants.Cards.None);
         CurrentDealerIndex = 0;
         CurrentPlayerIndex = 0;
+
+        _playerMoves = new List<PlayerMove>(Constants.Cards.All.Count);
+        PlayerMoves = _playerMoves.AsReadOnly();
+
+        _validMoveCards = new HashSet<Card>();
+        ValidMoveCards = _validMoveCards.AsReadOnly();
+
         PointsRatio = 1;
         RequiredFirstCard = null;
 
         Initialize();
     }
+
+    public GameState State { get; private set; }
 
     public IReadOnlyList<Player> Players { get; }
 
@@ -64,80 +77,37 @@ public sealed class Game
 
     public Player CurrentPlayer => Players[CurrentPlayerIndex];
 
-    public Move? LastMove { get; private set; }
+    public IReadOnlyList<PlayerMove> PlayerMoves { get; }
+
+    public IReadOnlySet<Card> ValidMoveCards { get; }
 
     public int PointsRatio { get; private set; }
 
-    public PlayingCard? RequiredFirstCard { get; private set; }
+    public Card? RequiredFirstCard { get; private set; }
 
     public override string ToString()
-        => $@"{nameof(Players)}.{nameof(Players.Count)} = {Players.Count}, {nameof(CurrentDealerIndex)} = {
-            CurrentDealerIndex}, {nameof(PointsRatio)} = {PointsRatio}, {nameof(DrawingStack)}.{
-                nameof(DrawingStack.Cards)}.{nameof(DrawingStack.Cards.Count)} = {DrawingStack.Cards.Count}, {
-                    nameof(ActiveStack)}.{nameof(ActiveStack.Cards)}.{nameof(ActiveStack.Cards.Count)} = {
-                        ActiveStack.Cards.Count}";
-
-    public HashSet<PlayingCard> GetValidMoveCards()
-    {
-        if (ActiveStack.Cards.Count == 0)
-        {
-            return new HashSet<PlayingCard>(Constants.Cards.All);
-        }
-
-        var lastCard = ActiveStack.Cards[^1];
-        if (LastMove is null)
-        {
-            throw new InvalidOperationException(
-                @"[Internal error] The active stack is not empty, but the last move is not set.");
-        }
-
-        if (LastMove.LastCard != lastCard)
-        {
-            throw new InvalidOperationException(
-                $@"[Internal error] Inconsistency between the last card ({lastCard}) and last move ({LastMove}).");
-        }
-
-        var requestedSuit = LastMove.RequestedSuit ?? lastCard.Suit;
-
-        var result = new HashSet<PlayingCard>(Constants.Cards.Trump);
-        result.UnionWith(Constants.Cards.BySuit[requestedSuit]);
-        result.UnionWith(Constants.Cards.ByRank[lastCard.Rank]);
-
-        return result;
-    }
+        => $@"{nameof(Players)}.{nameof(Players.Count)} = {Players.Count}, {nameof(CurrentDealerIndex)} = {CurrentDealerIndex}, {
+            nameof(PointsRatio)} = {PointsRatio}, {nameof(DrawingStack)}.{nameof(DrawingStack.Cards)}.{nameof(DrawingStack.Cards.Count)} = {
+                DrawingStack.Cards.Count}, {nameof(ActiveStack)}.{nameof(ActiveStack.Cards)}.{nameof(ActiveStack.Cards.Count)} = {ActiveStack.Cards.Count}";
 
     public void MakeMove(Move move)
     {
         if (move is null)
         {
-            //// TODO [HarinezumiSama] Use null as 'pass'?
             throw new ArgumentNullException(nameof(move));
         }
 
-        if (RequiredFirstCard.HasValue && move.FirstCard != RequiredFirstCard.Value)
+        if (!ValidMoveCards.Contains(move.Card))
         {
             throw new ArgumentException(
-                $@"The player {CurrentPlayer.Name.ToUIString()} is a dealer and their first card in the first move must be {
-                    RequiredFirstCard.Value} (but was {move.FirstCard}).",
+                $@"Invalid move card ""{move.Card}"". State: {State}. Valid move cards: [{ValidMoveCards.Select(c => c.ToString()).Order().Join(",\x0020")}].",
                 nameof(move));
         }
 
-        var validMoveCards = GetValidMoveCards();
-        if (!validMoveCards.Contains(move.FirstCard))
-        {
-            var validMoveCardsString = validMoveCards.Select(card => card.ToString()).Join(", ");
-
-            throw new ArgumentException(
-                $@"The player {CurrentPlayer.Name.ToUIString()} cannot make a move with {
-                    move.FirstCard} as this card is invalid for the current game state (valid cards: {
-                        validMoveCardsString}).",
-                nameof(move));
-        }
-
-        if (move.IsBridgeDeclared && !CanDeclareBridgeWith(move))
+        if (move.IsBridgeDeclared && !CanDeclareBridgeWith(move.Card))
         {
             throw new ArgumentException(
-                $@"The player {CurrentPlayer.Name.ToUIString()} cannot declare bridge with {move}.",
+                $@"The player {CurrentPlayer.Name.ToUIString()} cannot declare bridge with ""{move.Card}"".",
                 nameof(move));
         }
 
@@ -179,7 +149,7 @@ public sealed class Game
             }
         }
 
-        if (move.FirstCard.Rank != PlayingCardRank.Six)
+        if (move.FirstCard.Rank != CardRank.Six)
         {
             MoveToNextPlayer(false);
         }
@@ -201,24 +171,24 @@ public sealed class Game
 
             switch (card.Rank)
             {
-                case PlayingCardRank.Seven:
+                case CardRank.Seven:
                     DrawCardsToVictimPlayer(1);
                     break;
 
-                case PlayingCardRank.Eight:
+                case CardRank.Eight:
                     DrawCardsToVictimPlayer(2);
                     MoveToNextPlayer(true);
                     break;
 
-                case PlayingCardRank.Six:
-                case PlayingCardRank.Nine:
-                case PlayingCardRank.Ten:
-                case PlayingCardRank.Jack:
-                case PlayingCardRank.King:
+                case CardRank.Six:
+                case CardRank.Nine:
+                case CardRank.Ten:
+                case CardRank.Jack:
+                case CardRank.King:
                     break;
 
-                case PlayingCardRank.Queen:
-                    if (card.Suit == PlayingCardSuit.Spades && index == move.Cards.Count - 1)
+                case CardRank.Queen:
+                    if (card.Suit == CardSuit.Spades && index == move.Cards.Count - 1)
                     {
                         DrawCardsToVictimPlayer(5);
                         MoveToNextPlayer(true);
@@ -226,7 +196,7 @@ public sealed class Game
 
                     break;
 
-                case PlayingCardRank.Ace:
+                case CardRank.Ace:
                     MoveToNextPlayer(true);
                     break;
 
@@ -236,7 +206,7 @@ public sealed class Game
         }
 
         if (move.IsBridgeDeclared
-            || (CurrentPlayer.Cards.Count == 0 && move.FirstCard.Rank != PlayingCardRank.Six))
+            || (CurrentPlayer.Cards.Count == 0 && move.FirstCard.Rank != CardRank.Six))
         {
             throw new NotImplementedException("[TODO] Implement end of round.");
         }
@@ -246,22 +216,17 @@ public sealed class Game
         RequiredFirstCard = null;
     }
 
-    public bool CanDeclareBridgeWith(Move move)
+    public bool CanDeclareBridgeWith(Card card)
     {
-        var rank = move.FirstCard.Rank;
+        var rank = card.Rank;
 
-        var sameRankCount = move.Cards.Count;
-        for (var index = ActiveStack.Cards.Count - 1; index >= 0; index--)
+        var sameRankCount = 1;
+        for (var index = ActiveStack.Cards.Count - 1; index >= 0 && ActiveStack.Cards[index].Rank == rank; index--)
         {
-            if (ActiveStack.Cards[index].Rank != rank)
-            {
-                break;
-            }
-
             sameRankCount++;
         }
 
-        return sameRankCount >= Constants.Suits.Count;
+        return sameRankCount >= Constants.CardSuits.All.Count;
     }
 
     private int GetNextPlayerIndex(int playerIndex)
@@ -279,7 +244,7 @@ public sealed class Game
 
     private void GetNextPlayerIndex(ref int playerIndex) => playerIndex = GetNextPlayerIndex(playerIndex);
 
-    private PlayingCard DrawCard()
+    private Card DrawCard()
     {
         if (DrawingStack.IsEmpty)
         {
@@ -311,6 +276,8 @@ public sealed class Game
     {
         DrawingStack.Shuffle();
 
+        Card? lastDealtCard = null;
+
         for (var index = 0; index < CardsPerPlayer; index++)
         {
             for (var playerIndex = 0; playerIndex < Players.Count; playerIndex++)
@@ -320,17 +287,88 @@ public sealed class Game
                 var card = DrawingStack.WithdrawTopCard();
                 Players[actualPlayerIndex].AppendCard(card);
 
-                if (index == CardsPerPlayer - 1 && actualPlayerIndex == CurrentDealerIndex)
-                {
-                    RequiredFirstCard = card;
-                }
+                lastDealtCard = card;
             }
         }
 
-        if (ActiveStack.Cards.Count != 0)
+        if (!ActiveStack.IsEmpty)
         {
             throw new InvalidOperationException(
-                $@"[Internal error] After initialization the active stack must be empty but it has {ActiveStack.Cards.Count} cards.");
+                $@"[Internal error] After initialization the active stack must be empty but it has {ActiveStack.Cards.Count} card(s).");
+        }
+
+        RequiredFirstCard = lastDealtCard.EnsureNotNull();
+
+        State = GameState.DealerFirstMove;
+        UpdateValidMoveCards();
+    }
+
+    private void UpdateValidMoveCards()
+    {
+        _validMoveCards.Clear();
+        switch (State)
+        {
+            case GameState.DealerFirstMove:
+                {
+                    Factotum.Assert(RequiredFirstCard is not null);
+                    Factotum.Assert(ActiveStack.IsEmpty);
+                    Factotum.Assert(PlayerMoves.Count == 0);
+
+                    _validMoveCards.Add(RequiredFirstCard.EnsureNotNull());
+                    break;
+                }
+
+            case GameState.PlayerTurnStarted:
+                {
+                    Factotum.Assert(!ActiveStack.IsEmpty);
+                    Factotum.Assert(PlayerMoves.Count > 0);
+
+                    var previousCard = ActiveStack.Cards[^1];
+                    var (previousPlayer, previousMove) = PlayerMoves[^1];
+
+                    Factotum.Assert(!previousMove.IsBridgeDeclared);
+                    Factotum.Assert(previousMove.IsTurnCompleted);
+                    Factotum.Assert(previousMove.Card == previousCard);
+                    Factotum.Assert(previousPlayer != CurrentPlayer);
+
+                    _validMoveCards.UnionWith(Constants.Cards.Trump);
+
+                    if (previousMove.RequestedSuit is { } requestedSuit)
+                    {
+                        _validMoveCards.UnionWith(Constants.Cards.BySuit[requestedSuit]);
+                    }
+                    else
+                    {
+                        _validMoveCards.UnionWith(Constants.Cards.BySuit[previousCard.Suit]);
+                        _validMoveCards.UnionWith(Constants.Cards.ByRank[previousCard.Rank]);
+                    }
+
+                    break;
+                }
+
+            case GameState.PlayerTurnContinued:
+                {
+                    Factotum.Assert(!ActiveStack.IsEmpty);
+                    Factotum.Assert(PlayerMoves.Count > 0);
+
+                    var previousCard = ActiveStack.Cards[^1];
+                    var (previousPlayer, previousMove) = PlayerMoves[^1];
+
+                    Factotum.Assert(!previousMove.IsBridgeDeclared);
+                    Factotum.Assert(!previousMove.IsTurnCompleted);
+                    Factotum.Assert(previousMove.Card == previousCard);
+                    Factotum.Assert(previousPlayer == CurrentPlayer);
+
+                    _validMoveCards.UnionWith(Constants.Cards.ByRank[previousCard.Rank]);
+                    break;
+                }
+
+            case GameState.RoundEnded:
+                // No valid move cards
+                break;
+
+            default:
+                throw State.CreateEnumValueNotImplementedException();
         }
     }
 }

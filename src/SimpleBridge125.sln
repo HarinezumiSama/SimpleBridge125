@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{CE87BC
 		..\.editorconfig = ..\.editorconfig
 		..\.gitignore = ..\.gitignore
 		SimpleBridge125.sln.DotSettings = SimpleBridge125.sln.DotSettings
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarinezumiSama.SimpleBridge125", "HarinezumiSama.SimpleBridge125\HarinezumiSama.SimpleBridge125.csproj", "{077644B7-16C4-4365-81CF-19DF8A0FC181}"

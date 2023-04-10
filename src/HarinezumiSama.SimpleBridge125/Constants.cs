@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Omnifactotum;
 
@@ -7,50 +7,49 @@ namespace HarinezumiSama.SimpleBridge125;
 
 public static class Constants
 {
-    public static readonly IReadOnlyCollection<PlayingCardSuit> Suits =
-        EnumFactotum.GetAllValues<PlayingCardSuit>().AsReadOnly();
+    public static class CardRanks
+    {
+        public static readonly IReadOnlySet<CardRank> All = CoreConstants.AllCardRanks;
 
-    public static readonly IReadOnlyCollection<PlayingCardRank> Ranks =
-        EnumFactotum.GetAllValues<PlayingCardRank>().AsReadOnly();
+        public const CardRank Trump = CardRank.Jack;
+        public const CardRank SuitRequesting = Trump;
+    }
+
+    public static class CardSuits
+    {
+        public static readonly IReadOnlySet<CardSuit> All = CoreConstants.AllCardSuits;
+    }
 
     public static class Cards
     {
-        public static readonly IReadOnlyList<PlayingCard> All = CreateAll();
-        public static readonly IReadOnlyList<PlayingCard> Empty = Array.Empty<PlayingCard>().AsReadOnly();
+        public static readonly IReadOnlyList<Card> None = ImmutableList<Card>.Empty;
 
-        public static readonly IReadOnlyList<PlayingCard> Trump =
-            All.Where(card => card.Rank == PlayingCardRank.Jack).ToArray().AsReadOnly();
+        public static readonly IReadOnlyList<Card> All = CoreConstants.AllCards;
 
-        public static readonly IReadOnlyDictionary<PlayingCardSuit, IReadOnlyList<PlayingCard>> BySuit =
-            new System.Collections.ObjectModel.ReadOnlyDictionary<PlayingCardSuit, IReadOnlyList<PlayingCard>>(
-                EnumFactotum
-                    .GetAllValues<PlayingCardSuit>()
-                    .ToDictionary(
-                        suit => suit,
-                        suit => (IReadOnlyList<PlayingCard>)All.Where(card => card.Suit == suit).ToArray().AsReadOnly()));
+        public static readonly IReadOnlySet<Card> Trump = CoreConstants.AllCards.Where(card => card.Rank == CardRanks.Trump).ToImmutableHashSet();
 
-        public static readonly IReadOnlyDictionary<PlayingCardRank, IReadOnlyList<PlayingCard>> ByRank =
-            new System.Collections.ObjectModel.ReadOnlyDictionary<PlayingCardRank, IReadOnlyList<PlayingCard>>(
-                EnumFactotum
-                    .GetAllValues<PlayingCardRank>()
-                    .ToDictionary(
-                        rank => rank,
-                        rank => (IReadOnlyList<PlayingCard>)All.Where(card => card.Rank == rank).ToArray().AsReadOnly()));
+        public static readonly IReadOnlyDictionary<CardSuit, IReadOnlySet<Card>> BySuit =
+            EnumFactotum
+                .GetAllValues<CardSuit>()
+                .ToImmutableDictionary(
+                    suit => suit,
+                    suit => (IReadOnlySet<Card>)CoreConstants.AllCards.Where(card => card.Suit == suit).ToImmutableHashSet());
 
-        private static IReadOnlyList<PlayingCard> CreateAll()
-        {
-            var allCards = new PlayingCard[Ranks.Count * Suits.Count];
+        public static readonly IReadOnlyDictionary<CardRank, IReadOnlySet<Card>> ByRank =
+            EnumFactotum
+                .GetAllValues<CardRank>()
+                .ToImmutableDictionary(
+                    rank => rank,
+                    rank => (IReadOnlySet<Card>)CoreConstants.AllCards.Where(card => card.Rank == rank).ToImmutableHashSet());
+    }
 
-            var index = 0;
-            foreach (var rank in Ranks)
-            {
-                foreach (var suit in Suits)
-                {
-                    allCards[index++] = new PlayingCard(rank, suit);
-                }
-            }
+    private static class CoreConstants
+    {
+        public static readonly IReadOnlySet<CardSuit> AllCardSuits = EnumFactotum.GetAllValues<CardSuit>().ToImmutableHashSet();
 
-            return allCards.AsReadOnly();
-        }
+        public static readonly IReadOnlySet<CardRank> AllCardRanks = EnumFactotum.GetAllValues<CardRank>().ToImmutableHashSet();
+
+        public static readonly IReadOnlyList<Card> AllCards =
+            AllCardRanks.SelectMany(rank => AllCardSuits.Select(suit => new Card(rank, suit))).ToImmutableList();
     }
 }

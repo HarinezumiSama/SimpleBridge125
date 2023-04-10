@@ -32,6 +32,7 @@ internal sealed class GameTests
         Assert.That(game.PointsRatio, Is.EqualTo(1));
         Assert.That(game.ActiveStack.Cards.Count, Is.EqualTo(0));
         Assert.That(game.RequiredFirstCard, Is.Not.Null);
+        Assert.That(game.State, Is.EqualTo(GameState.DealerFirstMove));
     }
 
     [Test]

@@ -8,7 +8,7 @@ namespace HarinezumiSama.SimpleBridge125;
 [DebuggerDisplay(@"{ToDebuggerString(),nq}")]
 public sealed class Player
 {
-    private readonly HashSet<PlayingCard> _cards;
+    private readonly HashSet<Card> _cards;
 
     internal Player(string name)
     {
@@ -21,18 +21,18 @@ public sealed class Player
 
         Name = name;
 
-        _cards = new HashSet<PlayingCard>();
+        _cards = new HashSet<Card>();
         Cards = _cards.AsReadOnly();
         Score = 0;
     }
 
     public string Name { get; }
 
-    public int Score { get; private init; }
+    public int Score { get; private set; }
 
-    public ReadOnlySet<PlayingCard> Cards { get; }
+    public ReadOnlySet<Card> Cards { get; }
 
-    public void AppendCard(PlayingCard card)
+    public void AppendCard(Card card)
     {
         if (!_cards.Add(card))
         {
@@ -40,7 +40,7 @@ public sealed class Player
         }
     }
 
-    public void RemoveCard(PlayingCard card)
+    public void RemoveCard(Card card)
     {
         if (!_cards.Remove(card))
         {
@@ -49,8 +49,7 @@ public sealed class Player
     }
 
     public override string ToString()
-        => $@"{nameof(Name)} = {Name.ToUIString()}, {nameof(Score)} = {Score}, {nameof(Cards)}.{
-            nameof(Cards.Count)} = {Cards.Count}";
+        => $@"{nameof(Name)} = {Name.ToUIString()}, {nameof(Score)} = {Score}, {nameof(Cards)}.{nameof(Cards.Count)} = {Cards.Count}";
 
     private string ToDebuggerString() => $@"{GetType().GetQualifiedName()}: {ToString()}";
 }
